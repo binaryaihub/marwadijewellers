@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mj-maroon-900: #4a0f1a;
+  --color-mj-maroon-800: #621826;
+  --color-mj-maroon-700: #7b1e2b;
+  --color-mj-maroon-600: #92263a;
+  --color-mj-maroon-500: #a8324a;
+  --color-mj-maroon-400: #c25467;
+  --color-mj-maroon-300: #d97f8d;
+
+  --color-mj-gold-700: #8a6d1c;
+  --color-mj-gold-600: #b08c25;
+  --color-mj-gold-500: #d4af37;
+  --color-mj-gold-400: #ddbf52;
+  --color-mj-gold-300: #e8c766;
+  --color-mj-gold-200: #f1d98a;
+  --color-mj-gold-100: #faecbf;
+
+  --color-mj-ivory: #fbf7ef;
+  --color-mj-cream: #f5ecd9;
+  --color-mj-ink: #1a1414;
+  --color-mj-mute: #6b5e5e;
+  --color-mj-line: #ece1cc;
+
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-serif-soft: var(--font-cormorant), Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display-hi: var(--font-tiro), var(--font-playfair), Georgia, serif;
+  --font-sans-hi: var(--font-mukta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-mj-soft: 0 10px 30px -12px rgba(74, 15, 26, 0.18);
+  --shadow-mj-glow: 0 0 0 1px rgba(212, 175, 55, 0.35), 0 12px 36px -10px rgba(212, 175, 55, 0.45);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-mj-ivory);
+    color: var(--color-mj-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-mj-maroon-700);
+    color: var(--color-mj-gold-200);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-mj-gold-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  html[lang="hi"] body {
+    font-family: var(--font-sans-hi);
+  }
+  html[lang="hi"] h1,
+  html[lang="hi"] h2,
+  html[lang="hi"] h3,
+  html[lang="hi"] h4,
+  html[lang="hi"] .font-display {
+    font-family: var(--font-display-hi);
+    letter-spacing: 0;
+  }
+  html[lang="hi"] .font-serif-soft {
+    font-family: var(--font-display-hi);
+  }
+}
+
+@layer components {
+  .gold-shimmer {
+    background: linear-gradient(
+      100deg,
+      var(--color-mj-gold-600) 0%,
+      var(--color-mj-gold-300) 25%,
+      #fff5cf 45%,
+      var(--color-mj-gold-300) 65%,
+      var(--color-mj-gold-600) 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: mj-shimmer 6s ease-in-out infinite;
+  }
+
+  .gold-foil {
+    background: linear-gradient(135deg, #b08c25 0%, #f1d98a 30%, #fff5cf 50%, #d4af37 70%, #8a6d1c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .mj-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-mj-gold-500) 30%,
+      var(--color-mj-gold-300) 50%,
+      var(--color-mj-gold-500) 70%,
+      transparent 100%
+    );
+  }
+
+  .mj-card {
+    background: #ffffff;
+    border: 1px solid var(--color-mj-line);
+    border-radius: 14px;
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .mj-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-mj-gold-300);
+    box-shadow: var(--shadow-mj-soft);
+  }
+
+  .mj-mandala {
+    background-image: url("/images/brand/mandala.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.05;
+  }
+
+  .marquee-track {
+    animation: mj-marquee 40s linear infinite;
+  }
+
+  .glass-nav {
+    background: rgba(251, 247, 239, 0.78);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+  }
+}
+
+@keyframes mj-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes mj-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes mj-bounce-once {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.25); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.cart-bounce {
+  animation: mj-bounce-once 420ms ease;
+}
