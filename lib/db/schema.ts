@@ -1,8 +1,8 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, serial, timestamp } from "drizzle-orm/pg-core";
 
-export const orders = sqliteTable("orders", {
+export const orders = pgTable("orders", {
   id: text("id").primaryKey(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: false }).notNull().defaultNow(),
   status: text("status", {
     enum: ["awaiting_payment", "pending_verification", "paid", "shipped", "delivered", "cancelled"],
   })
@@ -29,12 +29,12 @@ export const orders = sqliteTable("orders", {
   pincode: text("pincode").notNull(),
 
   utr: text("utr"),
-  utrSubmittedAt: integer("utr_submitted_at", { mode: "timestamp_ms" }),
+  utrSubmittedAt: timestamp("utr_submitted_at", { withTimezone: false }),
   notes: text("notes"),
 });
 
-export const orderItems = sqliteTable("order_items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
   orderId: text("order_id")
     .notNull()
     .references(() => orders.id, { onDelete: "cascade" }),

@@ -7,7 +7,7 @@ const config: NextConfig = {
       { protocol: "https", hostname: "picsum.photos" },
     ],
   },
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["@neondatabase/serverless"],
 };
 
 export default config;

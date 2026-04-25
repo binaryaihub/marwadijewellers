@@ -80,24 +80,24 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
 }
 
 export async function getOrder(id: string): Promise<OrderWithItems | null> {
-  const order = await db.select().from(orders).where(eq(orders.id, id)).get();
+  const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
   if (!order) return null;
-  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id)).all();
+  const items = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
   return { order, items };
 }
 
 export async function listOrders(): Promise<OrderWithItems[]> {
-  const rows = await db.select().from(orders).orderBy(desc(orders.createdAt)).all();
+  const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
   const result: OrderWithItems[] = [];
   for (const o of rows) {
-    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, o.id)).all();
+    const items = await db.select().from(orderItems).where(eq(orderItems.orderId, o.id));
     result.push({ order: o, items });
   }
   return result;
 }
 
 export async function submitUtr(orderId: string, utr: string, notes?: string): Promise<OrderWithItems | null> {
-  const existing = await db.select().from(orders).where(eq(orders.id, orderId)).get();
+  const [existing] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
   if (!existing) return null;
   if (existing.status !== "awaiting_payment" && existing.status !== "pending_verification") {
     throw new Error("Order is not awaiting payment");
