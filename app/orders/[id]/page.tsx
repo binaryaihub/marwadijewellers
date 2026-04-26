@@ -98,6 +98,28 @@ export default async function OrderStatusPage({ params }: { params: Promise<{ id
         </div>
       )}
 
+      {order.status === "cancelled" && (
+        <div className="mt-8 rounded-2xl border border-mj-maroon-700/30 bg-mj-maroon-700/5 p-5">
+          <p className="font-display text-lg text-mj-maroon-800">{t("order.cancelled.title")}</p>
+          {order.cancelledAt && (
+            <p className="mt-1 text-xs text-mj-mute">
+              {t("order.cancelled.on", { date: formatDate(order.cancelledAt) })}
+            </p>
+          )}
+          {order.cancellationReason && (
+            <div className="mt-3 rounded-xl bg-white p-3 text-sm">
+              <p className="text-[11px] uppercase tracking-wider text-mj-mute mb-1">
+                {t("order.cancelled.reason")}
+              </p>
+              <p className="text-mj-ink">{order.cancellationReason}</p>
+            </div>
+          )}
+          <p className="mt-3 text-sm text-mj-ink/85">
+            {isCod ? t("order.cancelled.desc.cod") : t("order.cancelled.desc.upi")}
+          </p>
+        </div>
+      )}
+
       {isCod && order.balanceAmount > 0 && (order.status === "paid" || order.status === "shipped") && (
         <div className="mt-8 rounded-2xl border border-mj-line bg-white p-5 flex items-start gap-3">
           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mj-cream text-mj-maroon-700">

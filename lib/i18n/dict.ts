@@ -352,6 +352,21 @@ const en = {
   "order.cod.balanceDueDesc": "Please keep ₹{n} ready in cash. Our delivery partner will collect it when they hand over your order.",
   "order.cod.advance": "Advance paid",
 
+  // Cancelled-order notice
+  "order.cancelled.title": "This order has been cancelled",
+  "order.cancelled.desc.upi": "If your UPI payment went through, the refund will be sent to the same UPI ID within 3–5 business days. Reach us on WhatsApp if you have questions.",
+  "order.cancelled.desc.cod": "Your COD advance (if paid) will be refunded to the same UPI ID within 3–5 business days. Reach us on WhatsApp if you have questions.",
+  "order.cancelled.reason": "Reason from store",
+  "order.cancelled.on": "Cancelled on {date}",
+
+  // Track order section on landing
+  "track.eyebrow": "Already ordered?",
+  "track.title": "Track your order",
+  "track.desc": "Paste your order ID — we'll show you exactly where it is.",
+  "track.placeholder": "Order ID (e.g. M2A8K3RX9PQM)",
+  "track.cta": "Track",
+  "track.tip": "Your order ID is in the WhatsApp confirmation we sent.",
+
   // Subcategory labels
   "sub.necklace": "necklace",
   "sub.earrings": "earrings",
@@ -726,6 +741,19 @@ const hi: typeof en = {
   "order.cod.balanceDueShort": "डिलीवरी पर देय",
   "order.cod.balanceDueDesc": "कृपया ₹{n} नकद तैयार रखें। हमारा डिलीवरी पार्टनर ऑर्डर देते समय यह राशि लेगा।",
   "order.cod.advance": "अग्रिम चुकाया",
+
+  "order.cancelled.title": "यह ऑर्डर रद्द कर दिया गया है",
+  "order.cancelled.desc.upi": "अगर आपका UPI भुगतान हो चुका है, तो रिफ़ंड उसी UPI ID पर 3–5 कार्य दिवस में भेज दिया जाएगा। कोई सवाल हो तो WhatsApp करें।",
+  "order.cancelled.desc.cod": "आपका COD अग्रिम (अगर चुकाया था) उसी UPI ID पर 3–5 कार्य दिवस में रिफ़ंड कर दिया जाएगा। कोई सवाल हो तो WhatsApp करें।",
+  "order.cancelled.reason": "दुकान की ओर से कारण",
+  "order.cancelled.on": "{date} को रद्द",
+
+  "track.eyebrow": "ऑर्डर कर चुके हैं?",
+  "track.title": "अपना ऑर्डर ट्रैक करें",
+  "track.desc": "ऑर्डर ID पेस्ट करें — हम बताएँगे यह कहाँ पहुँचा है।",
+  "track.placeholder": "ऑर्डर ID (जैसे M2A8K3RX9PQM)",
+  "track.cta": "ट्रैक करें",
+  "track.tip": "WhatsApp पर भेजी गई पुष्टि में ऑर्डर ID मिलेगी।",
 
   "sub.necklace": "हार",
   "sub.earrings": "बालियाँ",

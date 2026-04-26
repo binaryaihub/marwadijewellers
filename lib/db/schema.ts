@@ -67,6 +67,13 @@ export const orders = pgTable("orders", {
   utr: text("utr"),
   utrSubmittedAt: timestamp("utr_submitted_at", { withTimezone: false }),
   notes: text("notes"),
+
+  // Soft-archive: orders are never deleted. Setting archivedAt hides them
+  // from the default admin view but keeps them addressable by ID and
+  // visible to the customer.
+  archivedAt: timestamp("archived_at", { withTimezone: false }),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: false }),
+  cancellationReason: text("cancellation_reason"),
 });
 
 export const orderItems = pgTable("order_items", {

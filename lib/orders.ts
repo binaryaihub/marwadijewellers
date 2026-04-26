@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import { orders, orderItems, OrderRow, OrderItemRow } from "./db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, isNull, isNotNull } from "drizzle-orm";
 import { newOrderId } from "./id";
 import { getBySlug } from "./products";
 import { AddressInput } from "./validators";
@@ -97,8 +97,14 @@ export async function getOrder(id: string): Promise<OrderWithItems | null> {
   return { order, items };
 }
 
-export async function listOrders(): Promise<OrderWithItems[]> {
-  const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
+export interface ListOrdersOpts {
+  /** When true, returns only archived orders. When false (default), only non-archived. */
+  archived?: boolean;
+}
+
+export async function listOrders(opts: ListOrdersOpts = {}): Promise<OrderWithItems[]> {
+  const where = opts.archived ? isNotNull(orders.archivedAt) : isNull(orders.archivedAt);
+  const rows = await db.select().from(orders).where(where).orderBy(desc(orders.createdAt));
   const result: OrderWithItems[] = [];
   for (const o of rows) {
     const items = await db.select().from(orderItems).where(eq(orderItems.orderId, o.id));
@@ -127,7 +133,26 @@ export async function submitUtr(orderId: string, utr: string, notes?: string): P
 
 export type OrderStatus = OrderRow["status"];
 
-export async function setStatus(orderId: string, status: OrderStatus): Promise<OrderWithItems | null> {
-  await db.update(orders).set({ status }).where(eq(orders.id, orderId));
+export async function setStatus(
+  orderId: string,
+  status: OrderStatus,
+  reason?: string,
+): Promise<OrderWithItems | null> {
+  const update: Partial<typeof orders.$inferInsert> = { status };
+  if (status === "cancelled") {
+    update.cancelledAt = new Date();
+    if (reason) update.cancellationReason = reason;
+  }
+  await db.update(orders).set(update).where(eq(orders.id, orderId));
+  return getOrder(orderId);
+}
+
+export async function archiveOrder(orderId: string): Promise<OrderWithItems | null> {
+  await db.update(orders).set({ archivedAt: new Date() }).where(eq(orders.id, orderId));
+  return getOrder(orderId);
+}
+
+export async function unarchiveOrder(orderId: string): Promise<OrderWithItems | null> {
+  await db.update(orders).set({ archivedAt: null }).where(eq(orders.id, orderId));
   return getOrder(orderId);
 }

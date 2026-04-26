@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Banknote, Zap } from "lucide-react";
+import { ChevronDown, Banknote, Zap, Archive, ArchiveRestore, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatINR, formatDate } from "@/lib/format";
@@ -34,14 +34,15 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
   const [busy, setBusy] = useState(false);
   const router = useRouter();
   const isCod = order.paymentMethod === "cod";
+  const isArchived = !!order.archivedAt;
 
-  const updateStatus = async (status: OrderRow["status"]) => {
+  const updateStatus = async (status: OrderRow["status"], reason?: string) => {
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/orders/${order.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, reason }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Failed");
       toast(`Order marked ${STATUS_LABEL[status]}`, "success");
@@ -53,8 +54,43 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
     }
   };
 
+  const cancelOrder = async () => {
+    const reason = window.prompt(
+      "Cancel this order — optional reason for the customer (refund instructions, out-of-stock, etc.):",
+      "",
+    );
+    // Treat null (clicked Cancel in prompt) as "don't cancel".
+    if (reason === null) return;
+    const confirmed = window.confirm(
+      `Cancel order #${order.id}?\n\n` +
+        (order.status === "delivered"
+          ? "This order is already marked Delivered. Cancelling it now is unusual but allowed."
+          : "This is irreversible from the customer's perspective."),
+    );
+    if (!confirmed) return;
+    await updateStatus("cancelled", reason || undefined);
+  };
+
+  const setArchived = async (archived: boolean) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}/archive`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ archived }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Failed");
+      toast(archived ? "Order archived" : "Order restored", "success");
+      router.refresh();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Failed to update", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <div className="mj-card bg-white overflow-hidden">
+    <div className={cn("mj-card bg-white overflow-hidden", isArchived && "opacity-70")}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-mj-cream/50 transition-colors"
@@ -74,6 +110,7 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
                 </>
               )}
             </Badge>
+            {isArchived && <Badge tone="neutral">Archived</Badge>}
             <span className="text-xs text-mj-mute">{formatDate(order.createdAt)}</span>
           </div>
           <p className="mt-1 text-sm text-mj-ink">
@@ -82,7 +119,9 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
         </div>
         <div className="text-right">
           <p className="font-display text-lg text-mj-maroon-800">{formatINR(order.amountTotal)}</p>
-          <p className="text-xs text-mj-mute">{items.length} item{items.length === 1 ? "" : "s"}</p>
+          <p className="text-xs text-mj-mute">
+            {items.length} item{items.length === 1 ? "" : "s"}
+          </p>
           {isCod && order.balanceAmount > 0 && (
             <p className="text-[11px] text-mj-mute mt-0.5">
               Adv {formatINR(order.advanceAmount)} · Bal {formatINR(order.balanceAmount)}
@@ -117,13 +156,39 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
 
                 <h3 className="font-display text-base mt-5 mb-2">Shipping</h3>
                 <p className="text-sm leading-relaxed text-mj-ink/85">
-                  {order.customerName}<br />
-                  {order.addressLine1}{order.addressLine2 ? `, ${order.addressLine2}` : ""}<br />
-                  {order.landmark && <>{order.landmark}<br /></>}
-                  {order.city}, {order.state} – {order.pincode}<br />
+                  {order.customerName}
+                  <br />
+                  {order.addressLine1}
+                  {order.addressLine2 ? `, ${order.addressLine2}` : ""}
+                  <br />
+                  {order.landmark && (
+                    <>
+                      {order.landmark}
+                      <br />
+                    </>
+                  )}
+                  {order.city}, {order.state} – {order.pincode}
+                  <br />
                   {order.customerPhone}
-                  {order.customerEmail && <><br />{order.customerEmail}</>}
+                  {order.customerEmail && (
+                    <>
+                      <br />
+                      {order.customerEmail}
+                    </>
+                  )}
                 </p>
+
+                {order.status === "cancelled" && (
+                  <div className="mt-5 rounded-xl border border-mj-maroon-700/30 bg-mj-maroon-700/5 p-3 text-sm">
+                    <p className="font-semibold text-mj-maroon-800">Cancelled</p>
+                    {order.cancelledAt && (
+                      <p className="text-xs text-mj-mute">on {formatDate(order.cancelledAt)}</p>
+                    )}
+                    {order.cancellationReason && (
+                      <p className="mt-1 text-mj-ink">{order.cancellationReason}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -157,13 +222,11 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
                     <span className="font-mono font-medium text-right">{order.utr ?? "— not yet submitted —"}</span>
                   </div>
                   {order.utrSubmittedAt && (
-                    <p className="text-[11px] text-mj-mute">
-                      Submitted {formatDate(order.utrSubmittedAt)}
-                    </p>
+                    <p className="text-[11px] text-mj-mute">Submitted {formatDate(order.utrSubmittedAt)}</p>
                   )}
                 </div>
 
-                <h3 className="font-display text-base mt-5 mb-2">Update status</h3>
+                <h3 className="font-display text-base mt-5 mb-2">Actions</h3>
                 <div className="flex flex-wrap gap-2">
                   {order.status === "pending_verification" && (
                     <Button size="sm" variant="gold" onClick={() => updateStatus("paid")} disabled={busy}>
@@ -180,9 +243,24 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
                       {isCod ? `Mark delivered + ${formatINR(order.balanceAmount)} collected` : "Mark delivered"}
                     </Button>
                   )}
-                  {order.status !== "cancelled" && order.status !== "delivered" && (
-                    <Button size="sm" variant="outline" onClick={() => updateStatus("cancelled")} disabled={busy}>
-                      Cancel
+                  {order.status !== "cancelled" && (
+                    <Button size="sm" variant="outline" onClick={cancelOrder} disabled={busy}>
+                      <X className="size-3.5" /> Cancel order
+                    </Button>
+                  )}
+                  {!isArchived ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setArchived(true)}
+                      disabled={busy}
+                      className="text-mj-mute"
+                    >
+                      <Archive className="size-3.5" /> Archive
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => setArchived(false)} disabled={busy}>
+                      <ArchiveRestore className="size-3.5" /> Restore
                     </Button>
                   )}
                 </div>

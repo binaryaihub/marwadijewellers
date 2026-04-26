@@ -5,6 +5,7 @@ import { CategoryShowcase } from "@/components/home/CategoryShowcase";
 import { FeaturedSection } from "@/components/home/FeaturedSection";
 import { WhyMJ } from "@/components/home/WhyMJ";
 import { Testimonials } from "@/components/home/Testimonials";
+import { TrackOrder } from "@/components/home/TrackOrder";
 import { getFeatured } from "@/lib/products";
 import { getT } from "@/lib/i18n/server";
 import { isAdmin } from "@/lib/auth";
@@ -40,6 +41,10 @@ export default async function HomePage() {
       <Container className="py-16 md:py-20">
         <SectionHeader eyebrow={t("home.why.eyebrow")} title={t("home.why.title")} />
         <WhyMJ />
+      </Container>
+
+      <Container className="py-10 md:py-14">
+        <TrackOrder />
       </Container>
 
       <Container className="py-16 md:py-24">
