@@ -22,6 +22,7 @@ export function Navbar() {
     { href: "/shop/women", label: t("nav.women") },
     { href: "/shop/men", label: t("nav.men") },
     { href: "/shop", label: t("nav.all") },
+    { href: "/orders", label: t("nav.track") },
     { href: "/about", label: t("nav.about") },
   ];
 

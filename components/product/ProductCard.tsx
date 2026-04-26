@@ -40,7 +40,7 @@ export function ProductCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
-      className="group"
+      className="group relative"
     >
       <Link
         href={`/shop/${product.slug}`}
@@ -83,17 +83,6 @@ export function ProductCard({
             )}
           </div>
 
-          {isAdminView && (
-            <Link
-              href={`/admin/products/${product.slug}/edit`}
-              onClick={(e) => e.stopPropagation()}
-              aria-label={`Edit ${product.name}`}
-              className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-mj-maroon-700 text-mj-gold-200 shadow-md hover:bg-mj-maroon-800"
-            >
-              <Pencil className="size-3.5" />
-            </Link>
-          )}
-
           {orderable && (
             <button
               onClick={handleAdd}
@@ -119,6 +108,18 @@ export function ProductCard({
           </p>
         </div>
       </Link>
+
+      {/* Admin edit pencil — sibling of the card link, not nested, to keep
+          the markup valid (no <a> inside <a>). z-10 puts it above the card. */}
+      {isAdminView && (
+        <Link
+          href={`/admin/products/${product.slug}/edit`}
+          aria-label={`Edit ${product.name}`}
+          className="absolute top-3 right-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-mj-maroon-700 text-mj-gold-200 shadow-md hover:bg-mj-maroon-800"
+        >
+          <Pencil className="size-3.5" />
+        </Link>
+      )}
     </motion.div>
   );
 }
