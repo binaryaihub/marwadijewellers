@@ -13,7 +13,14 @@ import { isAdmin } from "@/lib/auth";
 export default async function HomePage() {
   const { t } = await getT();
   const adminView = await isAdmin();
-  const featured = await getFeatured(8);
+  // Don't crash the whole landing page if the DB is unavailable — render
+  // the static sections (hero, marquee, why MJ, testimonials) regardless.
+  let featured: Awaited<ReturnType<typeof getFeatured>> = [];
+  try {
+    featured = await getFeatured(8);
+  } catch (err) {
+    console.error("Failed to load featured products:", err);
+  }
 
   return (
     <>

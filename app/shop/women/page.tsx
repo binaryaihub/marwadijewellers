@@ -11,7 +11,12 @@ export const metadata = { title: "Women" };
 export default async function WomenShopPage() {
   const { t } = await getT();
   const adminView = await isAdmin();
-  const products = await getByCategory("women", { includeArchived: adminView });
+  let products: Awaited<ReturnType<typeof getByCategory>> = [];
+  try {
+    products = await getByCategory("women", { includeArchived: adminView });
+  } catch (err) {
+    console.error("Failed to load women catalog:", err);
+  }
   return (
     <Container className="py-12 md:py-16">
       <SectionHeader
