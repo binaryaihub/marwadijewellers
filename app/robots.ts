@@ -5,6 +5,6 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       { userAgent: "*", allow: "/", disallow: ["/admin", "/checkout", "/orders", "/api"] },
     ],
-    sitemap: "https://marwadijewellers.example/sitemap.xml",
+    sitemap: "https://marwadijewellers.com/sitemap.xml",
   };
 }

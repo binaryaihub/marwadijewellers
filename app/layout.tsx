@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
   },
   robots: { index: true, follow: true },
-  metadataBase: new URL("https://marwadijewellers.example"),
+  metadataBase: new URL("https://marwadijewellers.com"),
 };
 
 export const viewport: Viewport = {

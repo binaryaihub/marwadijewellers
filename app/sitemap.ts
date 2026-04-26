@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getAllProducts } from "@/lib/products";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = "https://marwadijewellers.example";
+  const base = "https://marwadijewellers.com";
   const fixed = ["", "/shop", "/shop/women", "/shop/men", "/about", "/contact", "/policies/shipping", "/policies/returns", "/policies/privacy"];
 
   let products: MetadataRoute.Sitemap = [];
