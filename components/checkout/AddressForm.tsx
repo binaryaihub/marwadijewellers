@@ -16,7 +16,6 @@ import { useT } from "@/lib/i18n/Provider";
 export function AddressForm() {
   const { t } = useT();
   const items = useCart((s) => s.items);
-  const clearCart = useCart((s) => s.clear);
   const method = useCheckoutMethod((s) => s.method);
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -49,7 +48,9 @@ export function AddressForm() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to place order");
-      clearCart();
+      // Don't clear the cart here — the CheckoutGuard on /checkout would
+      // race the navigation and bounce the user to /cart. The pay page
+      // clears the cart on mount instead (CartClearOnMount).
       router.push(`/checkout/pay/${json.orderId}`);
     } catch (e) {
       toast(e instanceof Error ? e.message : "Something went wrong", "error");

@@ -3,6 +3,7 @@ import { Container } from "@/components/ui/Container";
 import { getOrder } from "@/lib/orders";
 import { buildUpiUrl, generateQrDataUrl } from "@/lib/upi";
 import { UpiPaymentBlock } from "@/components/checkout/UpiPaymentBlock";
+import { CartClearOnMount } from "@/components/checkout/CartClearOnMount";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export default async function PayPage({ params }: { params: Promise<{ orderId: s
 
   return (
     <Container className="py-10 md:py-14">
+      <CartClearOnMount />
       <h1 className="font-display text-3xl md:text-5xl text-mj-ink mb-2">
         {isCod ? t("pay.title.cod", { n: upiAmount }) : t("pay.title")}
       </h1>
