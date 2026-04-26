@@ -1,12 +1,12 @@
-import productsData from "@/content/products.json";
+import "server-only";
+import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { db } from "./db";
+import { products } from "./db/schema";
+import type { ProductRow } from "./db/schema";
 
 export type ProductCategory = "women" | "men";
-// Subcategory is intentionally a free-form string so importers from external
-// stores can pass through their own taxonomy (jhumki, mangalsutra, ponchi…)
-// without forcing every value into a narrow union. Translation lookups in the
-// Hindi dict fall back to the slug for any key without a translation.
 export type Subcategory = string;
-
+export type ProductStatus = "active" | "disabled" | "archived";
 export type ReturnPolicyType = "returnable" | "exchange-only" | "non-returnable";
 
 export interface ReturnPolicy {
@@ -15,10 +15,6 @@ export interface ReturnPolicy {
   note?: string;
 }
 
-// Storefront-wide default applied to any product that doesn't specify its own
-// policy. Today every SKU is returnable + exchangeable for 7 days; the
-// per-product field exists so we can later make selected SKUs (e.g. piercing
-// jewellery, custom orders) non-returnable without a code change.
 export const DEFAULT_RETURN_POLICY: ReturnPolicy = { type: "returnable", days: 7 };
 
 export interface Product {
@@ -37,6 +33,7 @@ export interface Product {
   stock: number;
   featured?: boolean;
   new?: boolean;
+  status: ProductStatus;
   returnPolicy?: ReturnPolicy;
 }
 
@@ -44,39 +41,250 @@ export function getReturnPolicy(product: Pick<Product, "returnPolicy">): ReturnP
   return product.returnPolicy ?? DEFAULT_RETURN_POLICY;
 }
 
-const products = productsData as Product[];
-
-export function getAllProducts(): Product[] {
-  return products;
+// ── DB row → Product mapping ───────────────────────────────────────────
+function splitLines(s: string | null | undefined): string[] {
+  if (!s) return [];
+  return s
+    .split(/\r?\n/)
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
-export function getByCategory(category: ProductCategory): Product[] {
-  return products.filter((p) => p.category === category);
+function joinLines(arr: string[] | null | undefined): string {
+  if (!arr) return "";
+  return arr.map((x) => x.trim()).filter(Boolean).join("\n");
 }
 
-export function getBySlug(slug: string): Product | undefined {
-  return products.find((p) => p.slug === slug);
+function fromRow(row: ProductRow): Product {
+  return {
+    slug: row.slug,
+    name: row.name,
+    category: row.category,
+    subcategory: row.subcategory,
+    price: row.price,
+    mrp: row.mrp,
+    material: row.material,
+    occasion: splitLines(row.occasion),
+    images: splitLines(row.images),
+    description: row.description,
+    dimensions: row.dimensions ?? undefined,
+    care: row.care ?? undefined,
+    stock: row.stock,
+    featured: row.featured,
+    new: row.isNew,
+    status: row.status,
+    returnPolicy: {
+      type: row.returnPolicyType,
+      days: row.returnDays,
+      note: row.returnNote ?? undefined,
+    },
+  };
 }
 
-export function getFeatured(limit = 8): Product[] {
-  return products.filter((p) => p.featured).slice(0, limit);
+// ── Public read helpers (storefront) ───────────────────────────────────
+// By default, exclude archived products. `disabled` products are returned
+// with a status flag so the catalog can render them with a "Currently
+// unavailable" badge but still allow browsing the detail page.
+export interface QueryOpts {
+  includeArchived?: boolean;
+  /** Storefront default: hide archived. Admin views can include all. */
+  includeAll?: boolean;
 }
 
-export function getRelated(slug: string, limit = 4): Product[] {
-  const product = getBySlug(slug);
+function visibleStatuses(opts?: QueryOpts): ProductStatus[] {
+  if (opts?.includeAll) return ["active", "disabled", "archived"];
+  if (opts?.includeArchived) return ["active", "disabled", "archived"];
+  return ["active", "disabled"];
+}
+
+export async function getAllProducts(opts?: QueryOpts): Promise<Product[]> {
+  const rows = await db
+    .select()
+    .from(products)
+    .where(inArray(products.status, visibleStatuses(opts)))
+    .orderBy(desc(products.createdAt));
+  return rows.map(fromRow);
+}
+
+export async function getByCategory(category: ProductCategory, opts?: QueryOpts): Promise<Product[]> {
+  const rows = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.category, category), inArray(products.status, visibleStatuses(opts))))
+    .orderBy(desc(products.createdAt));
+  return rows.map(fromRow);
+}
+
+export async function getBySlug(slug: string, opts?: QueryOpts): Promise<Product | undefined> {
+  // Always allow archived in this lookup — order detail pages need to render
+  // discontinued items. Callers that care about purchasability should check
+  // `product.status` themselves.
+  const allowed: ProductStatus[] =
+    opts?.includeAll === false ? visibleStatuses(opts) : (["active", "disabled", "archived"] as ProductStatus[]);
+  const [row] = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.slug, slug), inArray(products.status, allowed)))
+    .limit(1);
+  return row ? fromRow(row) : undefined;
+}
+
+export async function getFeatured(limit = 8): Promise<Product[]> {
+  const rows = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.featured, true), eq(products.status, "active")))
+    .orderBy(desc(products.createdAt))
+    .limit(limit);
+  return rows.map(fromRow);
+}
+
+export async function getRelated(slug: string, limit = 4): Promise<Product[]> {
+  const product = await getBySlug(slug);
   if (!product) return [];
-  return products
-    .filter((p) => p.slug !== slug && (p.category === product.category || p.subcategory === product.subcategory))
-    .slice(0, limit);
+  const rows = await db
+    .select()
+    .from(products)
+    .where(
+      and(
+        eq(products.status, "active"),
+        sql`${products.slug} <> ${slug}`,
+        or(eq(products.category, product.category), eq(products.subcategory, product.subcategory)),
+      ),
+    )
+    .limit(limit);
+  return rows.map(fromRow);
 }
 
-export function getSubcategories(category: ProductCategory): Subcategory[] {
-  const set = new Set<Subcategory>();
-  products.filter((p) => p.category === category).forEach((p) => set.add(p.subcategory));
-  return Array.from(set);
+export async function getSubcategories(category: ProductCategory): Promise<Subcategory[]> {
+  const rows = await db
+    .selectDistinct({ subcategory: products.subcategory })
+    .from(products)
+    .where(and(eq(products.category, category), eq(products.status, "active")));
+  return rows.map((r) => r.subcategory).filter(Boolean) as Subcategory[];
 }
 
-export function priceRange(): { min: number; max: number } {
-  const prices = products.map((p) => p.price);
-  return { min: Math.min(...prices), max: Math.max(...prices) };
+export async function priceRange(): Promise<{ min: number; max: number }> {
+  const rows = await db
+    .select({
+      min: sql<number>`min(${products.price})`,
+      max: sql<number>`max(${products.price})`,
+    })
+    .from(products)
+    .where(eq(products.status, "active"));
+  const r = rows[0];
+  return { min: r?.min ?? 0, max: r?.max ?? 0 };
+}
+
+// ── Admin queries ──────────────────────────────────────────────────────
+export interface AdminListFilters {
+  search?: string;
+  category?: ProductCategory;
+  status?: ProductStatus | "all";
+}
+
+export async function adminListProducts(filters: AdminListFilters = {}): Promise<Product[]> {
+  const conditions = [];
+  if (filters.search) {
+    conditions.push(or(ilike(products.slug, `%${filters.search}%`), ilike(products.name, `%${filters.search}%`)));
+  }
+  if (filters.category) {
+    conditions.push(eq(products.category, filters.category));
+  }
+  if (filters.status && filters.status !== "all") {
+    conditions.push(eq(products.status, filters.status));
+  }
+  const rows = await db
+    .select()
+    .from(products)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(products.createdAt));
+  return rows.map(fromRow);
+}
+
+export async function slugExists(slug: string): Promise<boolean> {
+  const [row] = await db.select({ slug: products.slug }).from(products).where(eq(products.slug, slug)).limit(1);
+  return !!row;
+}
+
+export interface ProductWriteInput {
+  slug: string;
+  name: string;
+  category: ProductCategory;
+  subcategory: string;
+  price: number;
+  mrp: number;
+  material?: string;
+  occasion?: string[];
+  images?: string[];
+  description?: string;
+  dimensions?: string;
+  care?: string;
+  stock?: number;
+  featured?: boolean;
+  isNew?: boolean;
+  status?: ProductStatus;
+  returnPolicyType?: ReturnPolicyType;
+  returnDays?: number;
+  returnNote?: string;
+}
+
+export async function createProduct(input: ProductWriteInput): Promise<Product> {
+  const now = new Date();
+  await db.insert(products).values({
+    slug: input.slug,
+    name: input.name,
+    category: input.category,
+    subcategory: input.subcategory,
+    price: input.price,
+    mrp: input.mrp,
+    material: input.material ?? "",
+    occasion: joinLines(input.occasion),
+    images: joinLines(input.images),
+    description: input.description ?? "",
+    dimensions: input.dimensions ?? null,
+    care: input.care ?? null,
+    stock: input.stock ?? 0,
+    featured: input.featured ?? false,
+    isNew: input.isNew ?? false,
+    status: input.status ?? "active",
+    returnPolicyType: input.returnPolicyType ?? "returnable",
+    returnDays: input.returnDays ?? 7,
+    returnNote: input.returnNote ?? null,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const created = await getBySlug(input.slug, { includeAll: true });
+  if (!created) throw new Error("Product creation succeeded but lookup failed");
+  return created;
+}
+
+export async function updateProduct(slug: string, patch: Partial<ProductWriteInput>): Promise<Product | null> {
+  const update: Partial<typeof products.$inferInsert> = { updatedAt: new Date() };
+  if (patch.name !== undefined) update.name = patch.name;
+  if (patch.category !== undefined) update.category = patch.category;
+  if (patch.subcategory !== undefined) update.subcategory = patch.subcategory;
+  if (patch.price !== undefined) update.price = patch.price;
+  if (patch.mrp !== undefined) update.mrp = patch.mrp;
+  if (patch.material !== undefined) update.material = patch.material;
+  if (patch.occasion !== undefined) update.occasion = joinLines(patch.occasion);
+  if (patch.images !== undefined) update.images = joinLines(patch.images);
+  if (patch.description !== undefined) update.description = patch.description;
+  if (patch.dimensions !== undefined) update.dimensions = patch.dimensions || null;
+  if (patch.care !== undefined) update.care = patch.care || null;
+  if (patch.stock !== undefined) update.stock = patch.stock;
+  if (patch.featured !== undefined) update.featured = patch.featured;
+  if (patch.isNew !== undefined) update.isNew = patch.isNew;
+  if (patch.status !== undefined) update.status = patch.status;
+  if (patch.returnPolicyType !== undefined) update.returnPolicyType = patch.returnPolicyType;
+  if (patch.returnDays !== undefined) update.returnDays = patch.returnDays;
+  if (patch.returnNote !== undefined) update.returnNote = patch.returnNote || null;
+
+  await db.update(products).set(update).where(eq(products.slug, slug));
+  return (await getBySlug(slug, { includeAll: true })) ?? null;
+}
+
+export async function setProductStatus(slug: string, status: ProductStatus): Promise<Product | null> {
+  await db.update(products).set({ status, updatedAt: new Date() }).where(eq(products.slug, slug));
+  return (await getBySlug(slug, { includeAll: true })) ?? null;
 }

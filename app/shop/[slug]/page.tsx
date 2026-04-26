@@ -5,19 +5,21 @@ import { Badge } from "@/components/ui/Badge";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { AddToCartBlock } from "@/components/product/AddToCartBlock";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { getAllProducts, getBySlug, getRelated, getReturnPolicy } from "@/lib/products";
+import { getBySlug, getRelated, getReturnPolicy } from "@/lib/products";
 import { formatINR, discountPercent } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
+import { isAdmin } from "@/lib/auth";
 import type { DictKey } from "@/lib/i18n/dict";
-import { RotateCcw, ShieldX } from "lucide-react";
+import { RotateCcw, ShieldX, Pencil } from "lucide-react";
 
-export async function generateStaticParams() {
-  return getAllProducts().map((p) => ({ slug: p.slug }));
-}
+// Note: this page is rendered at request time (not pre-built) — DATABASE_URL is
+// not available at build, and we want admin status changes to take effect
+// immediately. Skipping generateStaticParams keeps it simple.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const p = getBySlug(slug);
+  const p = await getBySlug(slug);
   if (!p) return {};
   return {
     title: p.name,
@@ -27,24 +29,46 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getBySlug(slug);
+  const adminView = await isAdmin();
+  const product = await getBySlug(slug, { includeAll: true });
   if (!product) return notFound();
   const { t } = await getT();
 
   const off = discountPercent(product.price, product.mrp);
-  const related = getRelated(product.slug);
+  const related = await getRelated(product.slug);
 
   return (
     <Container className="py-8 md:py-14">
-      <nav className="mb-6 text-sm text-mj-mute">
-        <Link href="/" className="hover:text-mj-maroon-700">{t("product.breadcrumb.home")}</Link>
-        <span className="mx-2">/</span>
-        <Link href={`/shop/${product.category}`} className="hover:text-mj-maroon-700">
-          {product.category === "women" ? t("nav.women") : t("nav.men")}
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-mj-ink">{product.name}</span>
-      </nav>
+      <div className="mb-6 flex items-center justify-between gap-3 flex-wrap">
+        <nav className="text-sm text-mj-mute">
+          <Link href="/" className="hover:text-mj-maroon-700">{t("product.breadcrumb.home")}</Link>
+          <span className="mx-2">/</span>
+          <Link href={`/shop/${product.category}`} className="hover:text-mj-maroon-700">
+            {product.category === "women" ? t("nav.women") : t("nav.men")}
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-mj-ink">{product.name}</span>
+        </nav>
+        {adminView && (
+          <Link
+            href={`/admin/products/${product.slug}/edit`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-mj-maroon-700 px-3 py-1.5 text-xs font-semibold text-mj-gold-200 hover:bg-mj-maroon-800"
+          >
+            <Pencil className="size-3.5" /> Edit product
+          </Link>
+        )}
+      </div>
+
+      {product.status !== "active" && (
+        <div className="mb-6 rounded-2xl border border-mj-line bg-mj-cream p-4 text-sm">
+          <p className="font-display text-base text-mj-ink">
+            {product.status === "disabled" ? t("product.unavailable") : t("product.discontinued")}
+          </p>
+          <p className="text-mj-mute mt-1">
+            {product.status === "disabled" ? t("product.unavailable.desc") : t("product.discontinued.desc")}
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-8 md:gap-14 md:grid-cols-2">
         <ProductGallery images={product.images} alt={product.name} label={product.subcategory} />

@@ -12,6 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Logo size="sm" />
           <nav className="flex items-center gap-5 text-sm">
             <Link href="/admin/orders" className="text-mj-ink hover:text-mj-maroon-700">Orders</Link>
+            <Link href="/admin/products" className="text-mj-ink hover:text-mj-maroon-700">Catalog</Link>
             <Link href="/" className="text-mj-mute hover:text-mj-maroon-700">View site →</Link>
           </nav>
         </Container>

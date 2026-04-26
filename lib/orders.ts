@@ -19,10 +19,13 @@ export interface OrderWithItems {
 }
 
 export async function createOrder(input: CreateOrderInput): Promise<OrderWithItems> {
-  const lineItems = input.items
-    .map((it) => {
-      const product = getBySlug(it.slug);
+  const resolved = await Promise.all(
+    input.items.map(async (it) => {
+      const product = await getBySlug(it.slug);
       if (!product) return null;
+      // Reject anything not orderable. Customers shouldn't be able to place
+      // orders for products that admins have disabled or archived.
+      if (product.status !== "active") return { error: `${product.name} is not available right now` };
       return {
         productSlug: product.slug,
         productName: product.name,
@@ -30,8 +33,16 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderWithIte
         qty: it.qty,
         imageRef: product.images[0],
       };
-    })
-    .filter((x): x is NonNullable<typeof x> => x !== null);
+    }),
+  );
+
+  const errored = resolved.find((r): r is { error: string } => !!r && "error" in r);
+  if (errored) throw new Error(errored.error);
+
+  const lineItems = resolved.filter(
+    (x): x is { productSlug: string; productName: string; unitPrice: number; qty: number; imageRef: string } =>
+      !!x && !("error" in x),
+  );
 
   if (lineItems.length === 0) {
     throw new Error("No valid items in order");

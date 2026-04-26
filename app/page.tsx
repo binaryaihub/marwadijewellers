@@ -7,10 +7,12 @@ import { WhyMJ } from "@/components/home/WhyMJ";
 import { Testimonials } from "@/components/home/Testimonials";
 import { getFeatured } from "@/lib/products";
 import { getT } from "@/lib/i18n/server";
+import { isAdmin } from "@/lib/auth";
 
 export default async function HomePage() {
   const { t } = await getT();
-  const featured = getFeatured(8);
+  const adminView = await isAdmin();
+  const featured = await getFeatured(8);
 
   return (
     <>
@@ -32,7 +34,7 @@ export default async function HomePage() {
           title={t("home.featured.title")}
           description={t("home.featured.desc")}
         />
-        <FeaturedSection products={featured} />
+        <FeaturedSection products={featured} isAdminView={adminView} />
       </Container>
 
       <Container className="py-16 md:py-20">

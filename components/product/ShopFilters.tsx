@@ -9,7 +9,13 @@ import type { DictKey } from "@/lib/i18n/dict";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "newest";
 
-export function ShopFilters({ products }: { products: Product[] }) {
+export function ShopFilters({
+  products,
+  isAdminView,
+}: {
+  products: Product[];
+  isAdminView?: boolean;
+}) {
   const { t } = useT();
 
   const subcategories = useMemo(() => {
@@ -72,7 +78,7 @@ export function ShopFilters({ products }: { products: Product[] }) {
         </label>
       </div>
 
-      <ProductGrid products={filtered} />
+      <ProductGrid products={filtered} isAdminView={isAdminView} />
     </div>
   );
 }

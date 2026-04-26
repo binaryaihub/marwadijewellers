@@ -304,6 +304,10 @@ const en = {
   "product.return.exchangeOnly": "{n}-day exchange only",
   "product.return.nonReturnable": "Final sale — no returns",
   "product.return.cta": "Read return policy",
+  "product.unavailable": "Currently unavailable",
+  "product.unavailable.desc": "This piece is temporarily not available for new orders. Check back soon or message us on WhatsApp.",
+  "product.discontinued": "Discontinued",
+  "product.discontinued.desc": "This piece is no longer in our catalog. Browse the rest of the collection or get in touch about similar designs.",
 
   // Checkout — payment method picker
   "checkout.payment.heading": "How would you like to pay?",
@@ -679,6 +683,10 @@ const hi: typeof en = {
   "product.return.exchangeOnly": "{n}-दिन सिर्फ़ एक्सचेंज",
   "product.return.nonReturnable": "अंतिम बिक्री — वापसी नहीं",
   "product.return.cta": "वापसी नीति पढ़ें",
+  "product.unavailable": "अभी उपलब्ध नहीं",
+  "product.unavailable.desc": "यह आभूषण फ़िलहाल नए ऑर्डर के लिए उपलब्ध नहीं है। थोड़ी देर बाद देखें या WhatsApp पर संपर्क करें।",
+  "product.discontinued": "बंद कर दिया",
+  "product.discontinued.desc": "यह आभूषण अब हमारे कैटलॉग में नहीं है। बाक़ी कलेक्शन देखें या मिलते-जुलते डिज़ाइन के लिए हमसे संपर्क करें।",
 
   "checkout.payment.heading": "आप कैसे भुगतान करना चाहेंगे?",
   "checkout.payment.upi.title": "पूरी राशि UPI से",

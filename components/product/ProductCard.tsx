@@ -8,17 +8,28 @@ import { Badge } from "@/components/ui/Badge";
 import { ProductImage } from "./ProductImage";
 import { useCart } from "@/lib/cart-store";
 import { toast } from "@/components/ui/Toast";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Pencil } from "lucide-react";
 import { useT } from "@/lib/i18n/Provider";
 import type { DictKey } from "@/lib/i18n/dict";
+import { cn } from "@/lib/cn";
 
-export function ProductCard({ product, priority }: { product: Product; priority?: boolean }) {
+export function ProductCard({
+  product,
+  priority,
+  isAdminView,
+}: {
+  product: Product;
+  priority?: boolean;
+  isAdminView?: boolean;
+}) {
   const add = useCart((s) => s.add);
   const { t } = useT();
   const off = discountPercent(product.price, product.mrp);
+  const orderable = product.status === "active";
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!orderable) return;
     add({ slug: product.slug, name: product.name, price: product.price, image: product.images[0] });
     toast(t("product.added", { name: product.name }), "success");
   };
@@ -31,9 +42,17 @@ export function ProductCard({ product, priority }: { product: Product; priority?
       transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
       className="group"
     >
-      <Link href={`/shop/${product.slug}`} className="block mj-card overflow-hidden">
+      <Link
+        href={`/shop/${product.slug}`}
+        className={cn("block mj-card overflow-hidden", !orderable && "opacity-75")}
+      >
         <div className="relative aspect-[4/5] overflow-hidden bg-mj-cream">
-          <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.06]">
+          <div
+            className={cn(
+              "absolute inset-0 transition-transform duration-700 group-hover:scale-[1.06]",
+              !orderable && "grayscale-[40%]",
+            )}
+          >
             <ProductImage
               src={product.images[0]}
               alt={product.name}
@@ -42,7 +61,7 @@ export function ProductCard({ product, priority }: { product: Product; priority?
             />
           </div>
 
-          {product.images[1] && (
+          {orderable && product.images[1] && (
             <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
               <ProductImage src={product.images[1]} alt={`${product.name} alternate`} label={product.subcategory} />
             </div>
@@ -50,22 +69,41 @@ export function ProductCard({ product, priority }: { product: Product; priority?
 
           <div className="absolute inset-x-3 top-3 flex items-start justify-between">
             <div className="flex flex-col gap-1.5">
-              {product.new && <Badge tone="gold">{t("product.new")}</Badge>}
-              {off > 0 && <Badge tone="maroon">{t("product.off", { n: off })}</Badge>}
+              {product.new && orderable && <Badge tone="gold">{t("product.new")}</Badge>}
+              {off > 0 && orderable && <Badge tone="maroon">{t("product.off", { n: off })}</Badge>}
+              {product.status === "disabled" && (
+                <Badge tone="neutral">{t("product.unavailable")}</Badge>
+              )}
+              {product.status === "archived" && (
+                <Badge tone="maroon">{t("product.discontinued")}</Badge>
+              )}
             </div>
-            {product.stock <= 5 && product.stock > 0 && (
+            {orderable && product.stock <= 5 && product.stock > 0 && (
               <Badge tone="neutral">{t("product.onlyLeft", { n: product.stock })}</Badge>
             )}
           </div>
 
-          <button
-            onClick={handleAdd}
-            type="button"
-            aria-label={t("product.addToCart") + " — " + product.name}
-            className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur px-3.5 py-2 text-xs font-semibold text-mj-maroon-800 shadow-md opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-mj-gold-300"
-          >
-            <ShoppingBag className="size-3.5" /> {t("product.add")}
-          </button>
+          {isAdminView && (
+            <Link
+              href={`/admin/products/${product.slug}/edit`}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`Edit ${product.name}`}
+              className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-mj-maroon-700 text-mj-gold-200 shadow-md hover:bg-mj-maroon-800"
+            >
+              <Pencil className="size-3.5" />
+            </Link>
+          )}
+
+          {orderable && (
+            <button
+              onClick={handleAdd}
+              type="button"
+              aria-label={t("product.addToCart") + " — " + product.name}
+              className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur px-3.5 py-2 text-xs font-semibold text-mj-maroon-800 shadow-md opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-mj-gold-300"
+            >
+              <ShoppingBag className="size-3.5" /> {t("product.add")}
+            </button>
+          )}
         </div>
 
         <div className="p-4">

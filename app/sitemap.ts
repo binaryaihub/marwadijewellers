@@ -1,16 +1,22 @@
 import type { MetadataRoute } from "next";
 import { getAllProducts } from "@/lib/products";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://marwadijewellers.example";
   const fixed = ["", "/shop", "/shop/women", "/shop/men", "/about", "/contact", "/policies/shipping", "/policies/returns", "/policies/privacy"];
 
-  const products = getAllProducts().map((p) => ({
-    url: `${base}/shop/${p.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
+  let products: MetadataRoute.Sitemap = [];
+  try {
+    const all = await getAllProducts();
+    products = all.map((p) => ({
+      url: `${base}/shop/${p.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+  } catch {
+    // DB unavailable at build time — emit sitemap with static routes only.
+  }
 
   return [
     ...fixed.map((path) => ({

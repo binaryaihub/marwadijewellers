@@ -1,4 +1,40 @@
-import { pgTable, text, integer, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, serial, timestamp, boolean } from "drizzle-orm/pg-core";
+
+export const products = pgTable("products", {
+  slug: text("slug").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category", { enum: ["women", "men"] }).notNull(),
+  subcategory: text("subcategory").notNull(),
+  price: integer("price").notNull(),
+  mrp: integer("mrp").notNull(),
+  material: text("material").notNull().default(""),
+  // Newline-separated values keep the schema dialect-portable.
+  occasion: text("occasion").notNull().default(""),
+  images: text("images").notNull().default(""),
+  description: text("description").notNull().default(""),
+  dimensions: text("dimensions"),
+  care: text("care"),
+  stock: integer("stock").notNull().default(0),
+  featured: boolean("featured").notNull().default(false),
+  isNew: boolean("is_new").notNull().default(false),
+  status: text("status", { enum: ["active", "disabled", "archived"] })
+    .notNull()
+    .default("active"),
+  returnPolicyType: text("return_policy_type", {
+    enum: ["returnable", "exchange-only", "non-returnable"],
+  })
+    .notNull()
+    .default("returnable"),
+  returnDays: integer("return_days").notNull().default(7),
+  returnNote: text("return_note"),
+  sourceId: integer("source_id"),
+  sourceCategory: text("source_category"),
+  createdAt: timestamp("created_at", { withTimezone: false }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: false }).notNull().defaultNow(),
+});
+
+export type ProductRow = typeof products.$inferSelect;
+export type ProductInsert = typeof products.$inferInsert;
 
 export const orders = pgTable("orders", {
   id: text("id").primaryKey(),
