@@ -95,6 +95,12 @@
     background-size: 220% 100%;
     -webkit-background-clip: text;
     background-clip: text;
+    /* Italic glyphs lean right and their slanted edge can overflow the
+       inline box; combined with background-clip:text that produces a
+       visible crop on the last letter (e.g. "l" in "jewel"). A small
+       end-padding gives the painted gradient room to cover the full glyph. */
+    display: inline-block;
+    padding-inline-end: 0.12em;
     color: transparent;
     animation: mj-shimmer 6s ease-in-out infinite;
   }
