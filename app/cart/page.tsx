@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { CartLine } from "@/components/cart/CartLine";
 import { useCart, cartSubtotal } from "@/lib/cart-store";
+import { useCheckoutMethod } from "@/lib/checkout-store";
 import { formatINR } from "@/lib/format";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { useT } from "@/lib/i18n/Provider";
@@ -44,7 +45,11 @@ export default function CartPage() {
               <div className="mj-divider opacity-50 my-3" />
               <Row label={t("cart.total")} value={formatINR(subtotal)} bold />
             </div>
-            <Link href="/checkout" className="block mt-5">
+            <Link
+              href="/checkout"
+              onClick={() => useCheckoutMethod.getState().setBuyNow(null)}
+              className="block mt-5"
+            >
               <Button size="lg" className="w-full">
                 {t("cart.checkout")}
                 <ArrowRight className="size-4" />

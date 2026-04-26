@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Product } from "@/lib/products";
 import { formatINR, discountPercent } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImage } from "./ProductImage";
 import { useCart } from "@/lib/cart-store";
+import { useCheckoutMethod } from "@/lib/checkout-store";
 import { toast } from "@/components/ui/Toast";
-import { ShoppingBag, Pencil } from "lucide-react";
+import { ShoppingBag, Pencil, Zap } from "lucide-react";
 import { useT } from "@/lib/i18n/Provider";
 import type { DictKey } from "@/lib/i18n/dict";
 import { cn } from "@/lib/cn";
@@ -23,15 +25,32 @@ export function ProductCard({
   isAdminView?: boolean;
 }) {
   const add = useCart((s) => s.add);
+  const setBuyNow = useCheckoutMethod((s) => s.setBuyNow);
+  const router = useRouter();
   const { t } = useT();
   const off = discountPercent(product.price, product.mrp);
   const orderable = product.status === "active";
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!orderable) return;
     add({ slug: product.slug, name: product.name, price: product.price, image: product.images[0] });
     toast(t("product.added", { name: product.name }), "success");
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!orderable) return;
+    setBuyNow({
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      image: product.images[0],
+      qty: 1,
+    });
+    router.push("/checkout");
   };
 
   return (
@@ -83,15 +102,26 @@ export function ProductCard({
             )}
           </div>
 
+          {/* Hover-revealed quick actions: Add (cream) + Buy now (gold). */}
           {orderable && (
-            <button
-              onClick={handleAdd}
-              type="button"
-              aria-label={t("product.addToCart") + " — " + product.name}
-              className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur px-3.5 py-2 text-xs font-semibold text-mj-maroon-800 shadow-md opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:bg-mj-gold-300"
-            >
-              <ShoppingBag className="size-3.5" /> {t("product.add")}
-            </button>
+            <div className="absolute inset-x-3 bottom-3 flex items-center justify-end gap-2 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+              <button
+                onClick={handleAdd}
+                type="button"
+                aria-label={t("product.addToCart") + " — " + product.name}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur px-3.5 py-2 text-xs font-semibold text-mj-maroon-800 shadow-md hover:bg-mj-cream"
+              >
+                <ShoppingBag className="size-3.5" /> {t("product.add")}
+              </button>
+              <button
+                onClick={handleBuyNow}
+                type="button"
+                aria-label={t("product.buyNow") + " — " + product.name}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-mj-gold-600 via-mj-gold-400 to-mj-gold-600 px-3.5 py-2 text-xs font-semibold text-mj-maroon-900 shadow-[0_4px_12px_-4px_rgba(212,175,55,0.6)] hover:brightness-110"
+              >
+                <Zap className="size-3.5" /> {t("product.buyNow")}
+              </button>
+            </div>
           )}
         </div>
 

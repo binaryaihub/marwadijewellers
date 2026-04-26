@@ -3,8 +3,8 @@
 import { Zap, Banknote, Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useT } from "@/lib/i18n/Provider";
-import { useCheckoutMethod } from "@/lib/checkout-store";
-import { useCart, cartSubtotal } from "@/lib/cart-store";
+import { useCheckoutMethod, useCheckoutItems } from "@/lib/checkout-store";
+import { cartSubtotal } from "@/lib/cart-store";
 import { advanceFee } from "@/lib/pricing";
 import { formatINR } from "@/lib/format";
 
@@ -12,7 +12,7 @@ export function PaymentMethodPicker() {
   const { t } = useT();
   const method = useCheckoutMethod((s) => s.method);
   const setMethod = useCheckoutMethod((s) => s.setMethod);
-  const items = useCart((s) => s.items);
+  const items = useCheckoutItems();
   const subtotal = cartSubtotal(items);
   const advance = advanceFee(subtotal);
   const balance = Math.max(0, subtotal - advance);

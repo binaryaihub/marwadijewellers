@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart, cartSubtotal, cartCount } from "@/lib/cart-store";
+import { useCheckoutMethod } from "@/lib/checkout-store";
 import { Button } from "@/components/ui/Button";
 import { CartLine } from "./CartLine";
 import { formatINR } from "@/lib/format";
@@ -81,7 +82,16 @@ export function CartDrawer() {
                   <Row label={t("cart.shipping")} value={t("shipping.always")} highlight />
                   <div className="mj-divider opacity-50" />
                   <Row label={t("cart.total")} value={formatINR(subtotal)} bold />
-                  <Link href="/checkout" onClick={() => setOpen(false)}>
+                  <Link
+                    href="/checkout"
+                    onClick={() => {
+                      // Cart-flow checkout — clear any stale buy-now slot so
+                      // the checkout summary reflects the cart, not a single
+                      // item from an earlier "Buy now" click.
+                      useCheckoutMethod.getState().setBuyNow(null);
+                      setOpen(false);
+                    }}
+                  >
                     <Button size="lg" className="w-full">
                       {t("cart.checkout")}
                       <ArrowRight className="size-4" />

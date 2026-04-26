@@ -5,8 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { addressSchema, AddressInput } from "@/lib/validators";
 import { Input, Label, FieldError } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { useCart } from "@/lib/cart-store";
-import { useCheckoutMethod } from "@/lib/checkout-store";
+import { useCheckoutMethod, useCheckoutItems } from "@/lib/checkout-store";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "@/components/ui/Toast";
@@ -15,7 +14,7 @@ import { useT } from "@/lib/i18n/Provider";
 
 export function AddressForm() {
   const { t } = useT();
-  const items = useCart((s) => s.items);
+  const items = useCheckoutItems();
   const method = useCheckoutMethod((s) => s.method);
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);

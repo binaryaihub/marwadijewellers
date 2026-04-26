@@ -1,7 +1,7 @@
 "use client";
 
-import { useCart, cartSubtotal } from "@/lib/cart-store";
-import { useCheckoutMethod } from "@/lib/checkout-store";
+import { cartSubtotal } from "@/lib/cart-store";
+import { useCheckoutMethod, useCheckoutItems } from "@/lib/checkout-store";
 import { paymentBreakdown } from "@/lib/pricing";
 import { formatINR } from "@/lib/format";
 import { ProductImage } from "@/components/product/ProductImage";
@@ -9,7 +9,7 @@ import { useT } from "@/lib/i18n/Provider";
 
 export function OrderSummary() {
   const { t } = useT();
-  const items = useCart((s) => s.items);
+  const items = useCheckoutItems();
   const method = useCheckoutMethod((s) => s.method);
   const subtotal = cartSubtotal(items);
   const breakdown = paymentBreakdown(subtotal, method);
