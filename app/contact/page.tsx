@@ -2,7 +2,12 @@ import { Container, SectionHeader } from "@/components/ui/Container";
 import { MessageCircle, Mail, Instagram } from "lucide-react";
 import { getT } from "@/lib/i18n/server";
 
-export const metadata = { title: "Contact" };
+export const metadata = {
+  title: "Contact — Marwadi Jewellers",
+  description:
+    "Reach Marwadi Jewellers on WhatsApp +91 6376785873 or email marwadijeweller@gmail.com. Order help, custom enquiries, support.",
+  alternates: { canonical: "/contact" },
+};
 
 export default async function ContactPage() {
   const { t } = await getT();

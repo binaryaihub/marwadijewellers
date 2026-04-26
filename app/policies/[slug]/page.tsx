@@ -10,11 +10,25 @@ export function generateStaticParams() {
   return SLUGS.map((slug) => ({ slug }));
 }
 
+const POLICY_DESC: Record<Slug, string> = {
+  shipping:
+    "Marwadi Jewellers shipping policy — always free, pan-India, 4–7 business day delivery. WhatsApp tracking on every order.",
+  returns:
+    "7-day returns and exchanges on every Marwadi Jewellers order. Refund to the same UPI ID within 3–5 business days.",
+  privacy:
+    "How Marwadi Jewellers handles your data — only what's needed for orders, never sold or shared with third parties.",
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!(SLUGS as readonly string[]).includes(slug)) return {};
   const { t } = await getT();
-  return { title: t(`policy.${slug}.title` as DictKey) };
+  const s = slug as Slug;
+  return {
+    title: t(`policy.${slug}.title` as DictKey),
+    description: POLICY_DESC[s],
+    alternates: { canonical: `/policies/${slug}` },
+  };
 }
 
 export default async function PolicyPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 const ICONS: Record<string, string> = {
@@ -19,6 +20,15 @@ const SEED_PALETTES: Array<{ a: string; b: string; c: string }> = [
   { a: "#4A0F1A", b: "#A8324A", c: "#FAECBF" },
 ];
 
+// Pre-compute the 8 placeholder rays at module load and round to 2 decimals so
+// server and client produce identical strings (avoids the same hydration
+// mismatch we hit on the Hero ornament).
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const PLACEHOLDER_RAYS = Array.from({ length: 8 }, (_, i) => ({
+  x2: round2(50 + Math.cos((i * Math.PI) / 4) * 46),
+  y2: round2(50 + Math.sin((i * Math.PI) / 4) * 46),
+}));
+
 function paletteFor(seed: string) {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
@@ -32,25 +42,31 @@ function parsePlaceholder(src: string): { kind: string; seed: string } | null {
   return { kind, seed };
 }
 
-export function ProductImage({
-  src,
-  alt,
-  className,
-  priority,
-  label,
-}: {
+interface Props {
   src: string;
   alt: string;
   className?: string;
   priority?: boolean;
   label?: string;
-}) {
+  /** Responsive `sizes` for next/image — pass "100vw" for full-width hero usages or
+   *  "(max-width: 768px) 50vw, 25vw" for grid cards. Defaults to the grid case. */
+  sizes?: string;
+}
+
+export function ProductImage({ src, alt, className, priority, label, sizes }: Props) {
   const placeholder = parsePlaceholder(src);
 
   if (!placeholder) {
+    // Real image — let next/image handle AVIF/WebP, srcset, and lazy loading.
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={alt} className={cn("h-full w-full object-cover", className)} loading={priority ? "eager" : "lazy"} />
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes ?? "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"}
+        priority={priority}
+        className={cn("object-cover", className)}
+      />
     );
   }
 
@@ -79,16 +95,8 @@ export function ProductImage({
       </defs>
       <rect width="100" height="100" fill={`url(#${gradId})`} />
       <circle cx="50" cy="50" r="38" fill={`url(#${gradId}-glow)`} />
-      {Array.from({ length: 8 }).map((_, i) => (
-        <line
-          key={i}
-          x1="50"
-          y1="50"
-          x2={50 + Math.cos((i * Math.PI) / 4) * 46}
-          y2={50 + Math.sin((i * Math.PI) / 4) * 46}
-          stroke={palette.c}
-          strokeOpacity="0.06"
-        />
+      {PLACEHOLDER_RAYS.map((ray, i) => (
+        <line key={i} x1="50" y1="50" x2={ray.x2} y2={ray.y2} stroke={palette.c} strokeOpacity="0.06" />
       ))}
       <path d={path} fill="none" stroke={palette.c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       {label && (

@@ -106,6 +106,32 @@ export async function getAllProducts(opts?: QueryOpts): Promise<Product[]> {
   return rows.map(fromRow);
 }
 
+// Slimmer query for sitemap.xml — pulls only the columns we need (slug,
+// updatedAt, images) and only active products. Skips disabled/archived since
+// those shouldn't be advertised to search engines.
+export interface SitemapEntry {
+  slug: string;
+  updatedAt: Date;
+  images: string[];
+}
+
+export async function getSitemapEntries(): Promise<SitemapEntry[]> {
+  const rows = await db
+    .select({
+      slug: products.slug,
+      updatedAt: products.updatedAt,
+      images: products.images,
+    })
+    .from(products)
+    .where(eq(products.status, "active"))
+    .orderBy(desc(products.updatedAt));
+  return rows.map((r) => ({
+    slug: r.slug,
+    updatedAt: r.updatedAt,
+    images: splitLines(r.images),
+  }));
+}
+
 export async function getByCategory(category: ProductCategory, opts?: QueryOpts): Promise<Product[]> {
   const rows = await db
     .select()

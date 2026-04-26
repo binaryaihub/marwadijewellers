@@ -1,7 +1,12 @@
 import { Container, SectionHeader } from "@/components/ui/Container";
 import { getT } from "@/lib/i18n/server";
 
-export const metadata = { title: "About us" };
+export const metadata = {
+  title: "About us — Marwadi Jewellers",
+  description:
+    "Marwadi Jewellers brings Rajasthani-inspired imitation jewellery online — quality you can trust, prices you'll love. Hand-finished by Indian artisans.",
+  alternates: { canonical: "/about" },
+};
 
 export default async function AboutPage() {
   const { t } = await getT();

@@ -11,6 +11,7 @@ import { getT } from "@/lib/i18n/server";
 import { isAdmin } from "@/lib/auth";
 import type { DictKey } from "@/lib/i18n/dict";
 import { RotateCcw, ShieldX, Pencil } from "lucide-react";
+import { breadcrumbJsonLd, jsonLdScript, productJsonLd } from "@/lib/seo/jsonld";
 
 // Note: this page is rendered at request time (not pre-built) — DATABASE_URL is
 // not available at build, and we want admin status changes to take effect
@@ -21,9 +22,28 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const p = await getBySlug(slug);
   if (!p) return {};
+  const desc =
+    p.description.slice(0, 160) ||
+    `${p.name} — hand-crafted imitation jewellery from Marwadi Jewellers. Free shipping across India.`;
+  const url = `/shop/${p.slug}`;
+  const primary = p.images[0];
   return {
     title: p.name,
-    description: p.description.slice(0, 160),
+    description: desc,
+    alternates: { canonical: url },
+    openGraph: {
+      title: p.name,
+      description: desc,
+      url,
+      type: "website",
+      images: primary ? [{ url: primary, alt: p.name }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: p.name,
+      description: desc,
+      images: primary ? [primary] : undefined,
+    },
   };
 }
 
@@ -39,6 +59,23 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <Container className="py-8 md:py-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(productJsonLd(product))}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", url: "/" },
+            {
+              name: product.category === "women" ? "Women" : "Men",
+              url: `/shop/${product.category}`,
+            },
+            { name: product.name, url: `/shop/${product.slug}` },
+          ]),
+        )}
+      />
       <div className="mb-6 flex items-center justify-between gap-3 flex-wrap">
         <nav className="text-sm text-mj-mute">
           <Link href="/" className="hover:text-mj-maroon-700">{t("product.breadcrumb.home")}</Link>

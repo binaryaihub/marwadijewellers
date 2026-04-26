@@ -11,6 +11,7 @@ import { LanguagePicker } from "@/components/i18n/LanguagePicker";
 import { getLocale } from "@/lib/i18n/server";
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE } from "@/lib/i18n/types";
+import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/seo/jsonld";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -48,23 +49,74 @@ const tiro = Tiro_Devanagari_Hindi({
 
 const brand = process.env.NEXT_PUBLIC_BRAND_NAME ?? "Marwadi Jewellers";
 
+const SITE_URL = "https://marwadijewellers.com";
+const DEFAULT_DESC =
+  "Heritage-inspired imitation jewellery for women & men — kundan, polki, mangalsutra, jhumkas, chains. Shop online with UPI or COD. Always free shipping across India.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${brand} — Heritage-inspired imitation jewellery`,
     template: `%s · ${brand}`,
   },
-  description:
-    "Hand-curated imitation jewellery for men and women — kundan, polki, temple, and contemporary designs. Pay securely via UPI.",
-  keywords: ["imitation jewellery", "kundan", "polki", "marwadi jewellers", "MJ", "online jewellery", "UPI"],
+  description: DEFAULT_DESC,
+  applicationName: brand,
+  keywords: [
+    "imitation jewellery",
+    "kundan jewellery online",
+    "polki necklace",
+    "mangalsutra online",
+    "jhumka earrings",
+    "rajasthani jewellery",
+    "marwadi jewellers",
+    "indian bridal jewellery",
+    "ranihaar",
+    "ponchi",
+    "tevta",
+    "rakhdi",
+    "online jewellery india",
+    "UPI jewellery checkout",
+  ],
+  authors: [{ name: brand }],
+  creator: brand,
+  publisher: brand,
+  category: "shopping",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: `${brand} — Heritage-inspired imitation jewellery`,
-    description: "Shop kundan, polki, temple & modern imitation jewellery. Pay via UPI.",
+    description: DEFAULT_DESC,
     siteName: brand,
     type: "website",
     locale: "en_IN",
+    url: SITE_URL,
   },
-  robots: { index: true, follow: true },
-  metadataBase: new URL("https://marwadijewellers.com"),
+  twitter: {
+    card: "summary_large_image",
+    title: `${brand} — Heritage-inspired imitation jewellery`,
+    description: DEFAULT_DESC,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon",
+  },
+  // Once you verify the site in Google Search Console, paste the meta-tag value
+  // here (or set NEXT_PUBLIC_GSC_VERIFICATION). Until then, leave undefined.
+  verification: process.env.NEXT_PUBLIC_GSC_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GSC_VERIFICATION }
+    : undefined,
 };
 
 export const viewport: Viewport = {
@@ -83,6 +135,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={locale}
       className={`${inter.variable} ${playfair.variable} ${cormorant.variable} ${mukta.variable} ${tiro.variable}`}
     >
+      <head>
+        {/* Site-wide structured data — Organization (Knowledge Panel) +
+            WebSite (sitelinks search box on brand SERPs). */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={jsonLdScript(organizationJsonLd())}
+        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(websiteJsonLd())} />
+      </head>
       <body className="min-h-screen flex flex-col">
         <LocaleProvider initialLocale={locale} initialChosen={hasChosen}>
           <Navbar />

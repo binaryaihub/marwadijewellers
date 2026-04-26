@@ -3,7 +3,12 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { getT } from "@/lib/i18n/server";
 
-export const metadata = { title: "Find your order" };
+export const metadata = {
+  title: "Track your order",
+  description: "Paste your Marwadi Jewellers order ID to see exactly where your order is.",
+  alternates: { canonical: "/orders" },
+  robots: { index: true, follow: true },
+};
 
 export default async function OrdersIndex() {
   const { t } = await getT();
