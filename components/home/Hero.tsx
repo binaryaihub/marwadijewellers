@@ -6,6 +6,24 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useT } from "@/lib/i18n/Provider";
 
+// Pre-compute trig-derived SVG coordinates and round to 2 decimals so server
+// and client produce bit-identical strings. Math.cos/sin can vary in the last
+// few decimals between Node and browser V8 builds, which trips React's
+// hydration mismatch detector.
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const RADIAL_LINES = Array.from({ length: 24 }, (_, i) => ({
+  x2: round2(Math.cos((i * Math.PI) / 12) * 230),
+  y2: round2(Math.sin((i * Math.PI) / 12) * 230),
+}));
+const NECKLACE_DOTS = Array.from({ length: 11 }, (_, i) => {
+  const ti = (i + 1) / 12;
+  return {
+    cx: round2(-150 + ti * 300),
+    cy: round2(4 * Math.sin(Math.PI * ti) * 35 - 20 + 80 * Math.sin(Math.PI * ti)),
+    r: 4 + (i === 5 ? 5 : 0),
+  };
+});
+
 export function Hero() {
   const { t } = useT();
   return (
@@ -115,13 +133,13 @@ function HeroOrnament() {
       <circle cx="260" cy="260" r="240" fill="url(#hero-glow)" />
 
       <g transform="translate(260 260)">
-        {Array.from({ length: 24 }).map((_, i) => (
+        {RADIAL_LINES.map(({ x2, y2 }, i) => (
           <line
             key={i}
             x1="0"
             y1="0"
-            x2={Math.cos((i * Math.PI) / 12) * 230}
-            y2={Math.sin((i * Math.PI) / 12) * 230}
+            x2={x2}
+            y2={y2}
             stroke="url(#hero-gold)"
             strokeOpacity="0.18"
           />
@@ -137,12 +155,9 @@ function HeroOrnament() {
           strokeWidth="3"
           strokeLinecap="round"
         />
-        {Array.from({ length: 11 }).map((_, i) => {
-          const ti = (i + 1) / 12;
-          const x = -150 + ti * 300;
-          const y = 4 * Math.sin(Math.PI * ti) * 35 - 20 + 80 * Math.sin(Math.PI * ti);
-          return <circle key={i} cx={x} cy={y} r={4 + (i === 5 ? 5 : 0)} fill="url(#hero-gold)" />;
-        })}
+        {NECKLACE_DOTS.map(({ cx, cy, r }, i) => (
+          <circle key={i} cx={cx} cy={cy} r={r} fill="url(#hero-gold)" />
+        ))}
         <g transform="translate(0 90)">
           <path d="M 0 -28 L 22 0 L 0 36 L -22 0 Z" fill="url(#hero-gold)" />
           <circle r="6" fill="#7B1E2B" />
