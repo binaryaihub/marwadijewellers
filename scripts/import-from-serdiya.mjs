@@ -1,8 +1,26 @@
 #!/usr/bin/env node
-// Imports products + images from https://serdiya.shop (WordPress + WooCommerce).
-// Outputs content/products.json and writes images to public/images/products/serdiya/.
+// ⚠️ DEPRECATED — kept for reference only.
 //
-// Usage:  node scripts/import-from-serdiya.mjs [--limit N] [--no-images]
+// This script was the original one-shot importer that fetched products from
+// https://serdiya.shop and wrote them to content/products.json + downloaded
+// images to public/images/products/serdiya/. It produced the seed data that
+// scripts/seed-products-from-json.mjs then loaded into Postgres, and the
+// images were later migrated to Vercel Blob via scripts/migrate-images-to-blob.mjs.
+//
+// As of the catalog migration to Postgres + Blob:
+//  - Products live in the `products` table (Neon)
+//  - Images live in Vercel Blob (the `marwadijewellers` public store, BOM1)
+//  - Add new products via /admin/products/new (drag-and-drop image upload)
+//
+// If you ever need to re-import from serdiya.shop, this script needs a rewrite
+// to (a) write directly to the products table via @neondatabase/serverless,
+// (b) upload images via @vercel/blob put() instead of writing to public/.
+// See scripts/migrate-images-to-blob.mjs for the Blob upload pattern and
+// scripts/seed-products-from-json.mjs for the Postgres insert pattern.
+//
+// Original usage (no longer functional end-to-end since content/products.json
+// is no longer read at runtime):
+//   node scripts/import-from-serdiya.mjs [--limit N] [--no-images]
 
 import fs from "node:fs/promises";
 import path from "node:path";
