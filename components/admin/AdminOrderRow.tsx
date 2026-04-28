@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Banknote, Zap, Archive, ArchiveRestore, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
@@ -143,13 +144,29 @@ export function AdminOrderRow({ order, items }: { order: OrderRow; items: OrderI
             <div className="grid md:grid-cols-2 gap-6 p-5">
               <div>
                 <h3 className="font-display text-base mb-2">Items</h3>
-                <ul className="space-y-1.5 text-sm">
+                <ul className="space-y-3 text-sm">
                   {items.map((it) => (
-                    <li key={it.id} className="flex justify-between gap-3">
-                      <span className="text-mj-ink">
-                        {it.productName} <span className="text-mj-mute">× {it.qty}</span>
-                      </span>
-                      <span className="font-medium">{formatINR(it.unitPrice * it.qty)}</span>
+                    <li key={it.id} className="flex items-start gap-3">
+                      {it.imageRef && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={it.imageRef}
+                          alt={it.productName}
+                          className="size-11 rounded-md object-cover bg-mj-cream shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-mj-ink truncate">
+                          {it.productName} <span className="text-mj-mute">× {it.qty}</span>
+                        </p>
+                        <Link
+                          href={`/admin/products/${it.productSlug}/edit`}
+                          className="font-mono text-xs text-mj-mute hover:text-mj-ink hover:underline break-all"
+                        >
+                          {it.productSlug}
+                        </Link>
+                      </div>
+                      <span className="font-medium whitespace-nowrap">{formatINR(it.unitPrice * it.qty)}</span>
                     </li>
                   ))}
                 </ul>
