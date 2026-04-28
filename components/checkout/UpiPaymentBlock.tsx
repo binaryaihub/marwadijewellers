@@ -122,6 +122,9 @@ export function UpiPaymentBlock({ orderId, amount, balance, paymentMethod, upiId
                 <ExternalLink className="size-4" /> {t("pay.openApp")}
               </Button>
             </a>
+            <p className="md:hidden mt-1 max-w-xs text-xs text-mj-mute leading-relaxed">
+              {t("pay.openApp.fallback")}
+            </p>
           </div>
 
           <div className="mj-divider mt-7 mb-5 opacity-60" />

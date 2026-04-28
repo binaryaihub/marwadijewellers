@@ -21,7 +21,7 @@ export default async function PayPage({ params }: { params: Promise<{ orderId: s
 
   const upiUrl = buildUpiUrl({ amount: upiAmount, orderId });
   const qrDataUrl = await generateQrDataUrl(upiUrl);
-  const upiId = process.env.NEXT_PUBLIC_UPI_ID ?? "yourupi@okicici";
+  const upiId = (process.env.NEXT_PUBLIC_UPI_ID ?? "yourupi@okicici").trim().toLowerCase();
 
   return (
     <Container className="py-10 md:py-14">
