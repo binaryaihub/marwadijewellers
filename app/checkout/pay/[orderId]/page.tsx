@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { getOrder } from "@/lib/orders";
-import { buildUpiUrls, generateQrDataUrl } from "@/lib/upi";
+import { buildUpiUrl, generateQrDataUrl } from "@/lib/upi";
 import { UpiPaymentBlock } from "@/components/checkout/UpiPaymentBlock";
 import { CartClearOnMount } from "@/components/checkout/CartClearOnMount";
 import { getT } from "@/lib/i18n/server";
@@ -19,8 +19,8 @@ export default async function PayPage({ params }: { params: Promise<{ orderId: s
   const isCod = order.paymentMethod === "cod";
   const upiAmount = order.advanceAmount > 0 ? order.advanceAmount : order.amountTotal;
 
-  const upiUrls = buildUpiUrls({ amount: upiAmount, orderId });
-  const qrDataUrl = await generateQrDataUrl(upiUrls.generic);
+  const upiUrl = buildUpiUrl({ amount: upiAmount, orderId });
+  const qrDataUrl = await generateQrDataUrl(upiUrl);
   const upiId = (process.env.NEXT_PUBLIC_UPI_ID ?? "yourupi@okicici").trim().toLowerCase();
 
   return (
@@ -37,7 +37,6 @@ export default async function PayPage({ params }: { params: Promise<{ orderId: s
         balance={order.balanceAmount}
         paymentMethod={order.paymentMethod}
         upiId={upiId}
-        upiUrls={upiUrls}
         qrDataUrl={qrDataUrl}
       />
     </Container>
