@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Check, ExternalLink, Loader2, Banknote } from "lucide-react";
+import { Copy, Check, Loader2, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, FieldError } from "@/components/ui/Input";
 import { toast } from "@/components/ui/Toast";
@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { useT } from "@/lib/i18n/Provider";
 import { formatINR } from "@/lib/format";
 import type { PaymentMethod } from "@/lib/pricing";
+import type { UpiUrls } from "@/lib/upi";
 
 interface Props {
   orderId: string;
@@ -17,11 +18,11 @@ interface Props {
   balance: number; // amount due on delivery (0 for full UPI orders)
   paymentMethod: PaymentMethod;
   upiId: string;
-  upiUrl: string;
+  upiUrls: UpiUrls;
   qrDataUrl: string;
 }
 
-export function UpiPaymentBlock({ orderId, amount, balance, paymentMethod, upiId, upiUrl, qrDataUrl }: Props) {
+export function UpiPaymentBlock({ orderId, amount, balance, paymentMethod, upiId, upiUrls, qrDataUrl }: Props) {
   const { t } = useT();
   const isCod = paymentMethod === "cod";
   const [copied, setCopied] = useState(false);
@@ -117,14 +118,20 @@ export function UpiPaymentBlock({ orderId, amount, balance, paymentMethod, upiId
               </button>
             </div>
 
-            <a href={upiUrl} className="md:hidden">
-              <Button variant="gold" size="sm">
-                <ExternalLink className="size-4" /> {t("pay.openApp")}
-              </Button>
-            </a>
-            <p className="md:hidden mt-1 max-w-xs text-xs text-mj-mute leading-relaxed">
-              {t("pay.openApp.fallback")}
-            </p>
+            <div className="md:hidden w-full mt-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-mj-gold-600 mb-2">
+                {t("pay.openIn.title")}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <AppButton href={upiUrls.phonepe} label={t("pay.openIn.phonepe")} />
+                <AppButton href={upiUrls.paytm} label={t("pay.openIn.paytm")} />
+                <AppButton href={upiUrls.gpay} label={t("pay.openIn.gpay")} />
+                <AppButton href={upiUrls.generic} label={t("pay.openIn.other")} />
+              </div>
+              <p className="mt-3 text-xs text-mj-mute leading-relaxed">
+                {t("pay.openApp.fallback")}
+              </p>
+            </div>
           </div>
 
           <div className="mj-divider mt-7 mb-5 opacity-60" />
@@ -179,6 +186,17 @@ export function UpiPaymentBlock({ orderId, amount, balance, paymentMethod, upiId
         </motion.div>
       </div>
     </>
+  );
+}
+
+function AppButton({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="flex items-center justify-center rounded-full border border-mj-gold-300 bg-mj-cream px-3 py-2.5 text-sm font-medium text-mj-maroon-800 hover:bg-mj-gold-200 active:bg-mj-gold-300 transition-colors"
+    >
+      {label}
+    </a>
   );
 }
 
